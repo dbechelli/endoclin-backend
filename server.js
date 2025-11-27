@@ -16,7 +16,7 @@ const path = require('path')
 const fs = require('fs')
 
 // Debug: verificar se o arquivo .env existe
-const envPath = '.env'
+const envPath = path.join(__dirname, '.env')
 
 // Carregar variáveis do .env manualmente se necessário
 const dotenv = require('dotenv')
