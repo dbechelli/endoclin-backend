@@ -48,7 +48,56 @@ pool.on('connect', () => {
 })
 
 // Aplicar autenticação em todas as rotas /api
-app.use('/api', auth.verifyAccessToken)
+app.use('/api', auth.verifyToken)
+
+// ============ AUTENTICAÇÃO ============
+
+// POST /auth/login - Fazer login
+app.post('/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body
+
+    if (!username || !password) {
+      return res.status(400).json({
+        error: 'Usuário e senha são obrigatórios'
+      })
+    }
+
+    const result = auth.login(username, password)
+
+    if (!result.success) {
+      return res.status(401).json({
+        error: result.error,
+        code: result.code
+      })
+    }
+
+    res.json({
+      token: result.token,
+      username: result.username,
+      type: 'Bearer'
+    })
+  } catch (error) {
+    console.error('Erro ao fazer login:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// POST /auth/logout - Fazer logout
+app.post('/auth/logout', auth.verifyToken, (req, res) => {
+  try {
+    const token = req.token
+
+    auth.logout(token)
+
+    res.json({
+      message: 'Logout realizado com sucesso'
+    })
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
 
 // ============ HEALTH CHECK (sem autenticação) ============
 
