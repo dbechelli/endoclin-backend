@@ -15,24 +15,22 @@ const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
 
-// Debug: verificar se o arquivo .env existe
-const envPath = '.env'
-
-// Carregar variáveis do .env manualmente se necessário
-const dotenv = require('dotenv')
-const envConfig = dotenv.parse(fs.readFileSync(envPath))
-
-// Aplicar variáveis ao process.env
-Object.keys(envConfig).forEach(key => {
-  process.env[key] = envConfig[key]
-})
-
-// Fallback: também tentar o método padrão
-require('dotenv').config({ path: envPath })
+// Carregar variáveis do .env se existir (desenvolvimento)
+require('dotenv').config({ path: '.env' })
 
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3000
+
+// Log de inicialização
+console.log('🚀 Iniciando servidor...')
+console.log('📋 Variáveis de ambiente:')
+console.log(`   PORT: ${process.env.PORT || 'não definida (usando 3000)'}`)
+console.log(`   DB_HOST: ${process.env.DB_HOST || 'não definida'}`)
+console.log(`   DB_PORT: ${process.env.DB_PORT || 'não definida'}`)
+console.log(`   DB_USER: ${process.env.DB_USER || 'não definida'}`)
+console.log(`   DB_NAME: ${process.env.DB_NAME || 'não definida'}`)
+console.log(`   API_KEY: ${process.env.API_KEY ? '✓ definida' : '✗ não definida'}`)
 
 // Middleware
 app.use(cors())
@@ -75,6 +73,35 @@ const authenticateToken = (req, res, next) => {
 
 // Aplicar autenticação em todas as rotas /api
 app.use('/api', authenticateToken)
+
+// ============ HEALTH CHECK (sem autenticação) ============
+
+// GET / - Health check básico
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok',
+    message: 'Backend SoftClin Agenda está operacional',
+    timestamp: new Date().toISOString()
+  })
+})
+
+// GET /health - Health check com status do DB
+app.get('/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()')
+    res.status(200).json({ 
+      status: 'ok',
+      database: 'connected',
+      timestamp: result.rows[0].now
+    })
+  } catch (err) {
+    res.status(503).json({ 
+      status: 'error',
+      database: 'disconnected',
+      error: err.message
+    })
+  }
+})
 
 // ============ ROTAS DE PROFISSIONAIS ============
 
@@ -314,11 +341,6 @@ app.post('/api/agendamentos', async (req, res) => {
 
 // ============ ROTAS DE VERIFICAÇÃO ============
 
-// Health check (sem autenticação)
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Backend está rodando' })
-})
-
 // DEBUG: Endpoint para verificar variáveis (remova em produção!)
 app.get('/api/debug/env', (req, res) => {
   res.json({
@@ -333,6 +355,9 @@ app.get('/api/debug/env', (req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, () => {
+  console.log(`\n✅ Servidor rodando em http://0.0.0.0:${PORT}`)
+  console.log(`📡 URL de health check: http://localhost:${PORT}/health`)
+  console.log(`🔌 Tentando conectar ao PostgreSQL em ${process.env.DB_HOST}:${process.env.DB_PORT}...`)
 })
 
 // Graceful shutdown
