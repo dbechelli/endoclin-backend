@@ -1,0 +1,10 @@
+{
+  "healthcheck": {
+    "enabled": true,
+    "path": "/health",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 40
+  }
+}
