@@ -25,16 +25,6 @@ require('dotenv').config({ path: '.env' })
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// Log de inicialização
-console.log('🚀 Iniciando servidor...')
-console.log('📋 Variáveis de ambiente:')
-console.log(`   PORT: ${process.env.PORT || 'não definida (usando 3000)'}`)
-console.log(`   DB_HOST: ${process.env.DB_HOST || 'não definida'}`)
-console.log(`   DB_PORT: ${process.env.DB_PORT || 'não definida'}`)
-console.log(`   DB_USER: ${process.env.DB_USER || 'não definida'}`)
-console.log(`   DB_NAME: ${process.env.DB_NAME || 'não definida'}`)
-console.log(`   API_KEY: ${process.env.API_KEY ? '✓ definida' : '✗ não definida'}`)
-
 // Middleware
 app.use(cors())
 app.use(express.json())
@@ -59,93 +49,6 @@ pool.on('connect', () => {
 
 // Aplicar autenticação em todas as rotas /api
 app.use('/api', auth.verifyAccessToken)
-
-// ============ AUTENTICAÇÃO ============
-
-// POST /auth/login - Fazer login
-app.post('/auth/login', (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    if (!username || !password) {
-      return res.status(400).json({
-        error: 'Usuário e senha são obrigatórios'
-      })
-    }
-
-    const result = auth.login(username, password)
-
-    if (!result.success) {
-      return res.status(401).json({
-        error: result.error,
-        code: result.code
-      })
-    }
-
-    res.json({
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-      expiresIn: result.expiresIn,
-      type: 'Bearer'
-    })
-  } catch (error) {
-    console.error('Erro ao fazer login:', error)
-    res.status(500).json({ error: error.message })
-  }
-})
-
-// POST /auth/refresh - Renovar access token
-app.post('/auth/refresh', (req, res) => {
-  try {
-    const { refreshToken } = req.body
-
-    if (!refreshToken) {
-      return res.status(400).json({
-        error: 'Refresh token é obrigatório'
-      })
-    }
-
-    const result = auth.refreshAccessToken(refreshToken)
-
-    if (!result.success) {
-      return res.status(401).json({
-        error: result.error,
-        code: result.code
-      })
-    }
-
-    res.json({
-      accessToken: result.accessToken,
-      expiresIn: result.expiresIn,
-      type: 'Bearer'
-    })
-  } catch (error) {
-    console.error('Erro ao renovar token:', error)
-    res.status(500).json({ error: error.message })
-  }
-})
-
-// POST /auth/logout - Fazer logout
-app.post('/auth/logout', auth.verifyAccessToken, (req, res) => {
-  try {
-    const { refreshToken } = req.body
-
-    if (!refreshToken) {
-      return res.status(400).json({
-        error: 'Refresh token é obrigatório'
-      })
-    }
-
-    auth.logout(refreshToken)
-
-    res.json({
-      message: 'Logout realizado com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao fazer logout:', error)
-    res.status(500).json({ error: error.message })
-  }
-})
 
 // ============ HEALTH CHECK (sem autenticação) ============
 
@@ -420,42 +323,4 @@ app.post('/api/agendamentos', async (req, res) => {
     console.error('Erro ao criar agendamento:', error)
     res.status(500).json({ error: error.message })
   }
-})
-
-// ============ ROTAS DE VERIFICAÇÃO ============
-
-// DEBUG: Endpoint para verificar variáveis (remova em produção!)
-app.get('/api/debug/env', (req, res) => {
-  res.json({
-    PORT: process.env.PORT,
-    DB_USER: process.env.DB_USER,
-    DB_HOST: process.env.DB_HOST ? '✓ Definida' : '✗ NÃO DEFINIDA',
-    DB_PORT: process.env.DB_PORT,
-    DB_NAME: process.env.DB_NAME,
-    API_KEY: process.env.API_KEY ? '✓ Definida' : '✗ NÃO DEFINIDA'
-  })
-})
-
-// Iniciar servidor
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n✅ Servidor rodando em http://0.0.0.0:${PORT}`)
-  console.log(`📡 Health check: GET http://localhost:${PORT}/health`)
-  console.log(`🔌 Conectando ao banco em ${process.env.DB_HOST}:${process.env.DB_PORT}...`)
-  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
-})
-
-// Tratamento de erros não capturados
-process.on('uncaughtException', (err) => {
-  console.error('❌ Erro não capturado:', err)
-})
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promise rejeitada não tratada:', reason)
-})
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n🛑 Encerrando servidor...')
-  pool.end()
-  process.exit(0)
 })
