@@ -21,9 +21,17 @@ const auth = require('./auth')
 // Carregar variáveis do .env se existir (desenvolvimento)
 require('dotenv').config({ path: '.env' })
 
-
 const app = express()
 const PORT = process.env.PORT || 3000
+
+// Log inicial
+console.log('\n🚀 Iniciando SoftClin Agenda Backend...')
+console.log('📋 Configuração carregada:')
+console.log(`   PORT: ${process.env.PORT || 'não definido (usando 3000)'}`)
+console.log(`   DB_HOST: ${process.env.DB_HOST || '⚠️  não definido'}`)
+console.log(`   DB_USER: ${process.env.DB_USER || '⚠️  não definido'}`)
+console.log(`   ADMIN_USERNAME: ${process.env.ADMIN_USERNAME || '⚠️  não definido'}`)
+console.log(`   JWT_SECRET: ${process.env.JWT_SECRET ? '✓ configurado' : '⚠️  não definido'}`)
 
 // Middleware
 app.use(cors())
@@ -107,6 +115,19 @@ app.get('/', (req, res) => {
     status: 'ok',
     message: 'Backend SoftClin Agenda está operacional',
     timestamp: new Date().toISOString()
+  })
+})
+
+// GET /debug/env - Debug de variáveis de ambiente (sem autenticação)
+app.get('/debug/env', (req, res) => {
+  res.json({
+    PORT: process.env.PORT || 'não definido',
+    DB_HOST: process.env.DB_HOST ? '✓ definido' : '✗ não definido',
+    DB_USER: process.env.DB_USER ? '✓ definido' : '✗ não definido',
+    DB_PORT: process.env.DB_PORT || 'não definido',
+    DB_NAME: process.env.DB_NAME ? '✓ definido' : '✗ não definido',
+    ADMIN_USERNAME: process.env.ADMIN_USERNAME ? '✓ definido' : '✗ não definido',
+    JWT_SECRET: process.env.JWT_SECRET ? '✓ definido' : '✗ não definido'
   })
 })
 

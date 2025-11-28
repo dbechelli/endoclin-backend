@@ -11,9 +11,12 @@ const JWT_SECRET = process.env.JWT_SECRET
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH
 
-// Validar que as variáveis obrigatórias estão configuradas
+// Log de verificação (sem erro fatal, só warning)
 if (!JWT_SECRET || !ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) {
-  throw new Error('❌ JWT_SECRET, ADMIN_USERNAME e ADMIN_PASSWORD_HASH não configurados no .env!')
+  console.warn('⚠️  Algumas variáveis de autenticação não estão configuradas:')
+  console.warn(`   JWT_SECRET: ${JWT_SECRET ? '✓' : '✗'}`)
+  console.warn(`   ADMIN_USERNAME: ${ADMIN_USERNAME ? '✓' : '✗'}`)
+  console.warn(`   ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH ? '✓' : '✗'}`)
 }
 
 // Store simples para sessions ativas (em produção, usar Redis ou DB)
