@@ -19,7 +19,6 @@ const fs = require('fs')
 const auth = require('./auth')
 
 // Carregar variáveis do .env apenas se existir (desenvolvimento local)
-const fs = require('fs')
 if (fs.existsSync('.env')) {
   require('dotenv').config({ path: '.env' })
 }
