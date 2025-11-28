@@ -45,7 +45,7 @@ const login = (username, password) => {
     }
   }
 
-  if (!bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)) {
+  if (password !== ADMIN_PASSWORD_HASH) {
     return {
       success: false,
       error: 'Usuário ou senha inválidos',
