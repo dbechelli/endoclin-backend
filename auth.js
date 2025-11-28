@@ -7,12 +7,17 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 
 // Credenciais do admin (do arquivo .env)
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin'
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || bcrypt.hashSync('admin123', 10)
-const JWT_SECRET = process.env.JWT_SECRET || 'sua-chave-secreta-muito-segura-aqui'
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'sua-chave-refresh-muito-segura-aqui'
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH
+const JWT_SECRET = process.env.JWT_SECRET
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+
+// Validar que as variáveis obrigatórias estão configuradas
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD_HASH || !JWT_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('❌ Variáveis de autenticação não configuradas. Verifique seu .env!')
+}
 
 // Store simples para refresh tokens (em produção, usar Redis ou DB)
 const refreshTokens = new Set()
