@@ -26,6 +26,16 @@ const activeSessions = new Map()
  * Fazer login com usuário e senha
  */
 const login = (username, password) => {
+  // Validar variáveis
+  if (!JWT_SECRET || !ADMIN_USERNAME || !ADMIN_PASSWORD_HASH) {
+    console.error('❌ Variáveis de autenticação não configuradas!')
+    return {
+      success: false,
+      error: 'Servidor não está configurado para autenticação',
+      code: 'CONFIG_ERROR'
+    }
+  }
+
   // Verificar credenciais
   if (username !== ADMIN_USERNAME) {
     return {

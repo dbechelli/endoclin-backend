@@ -71,15 +71,19 @@ app.post('/auth/login', (req, res) => {
       })
     }
 
+    console.log(`🔐 Tentativa de login: ${username}`)
+
     const result = auth.login(username, password)
 
     if (!result.success) {
+      console.log(`❌ Login falhou: ${result.error}`)
       return res.status(401).json({
         error: result.error,
         code: result.code
       })
     }
 
+    console.log(`✅ Login bem-sucedido: ${username}`)
     res.json({
       token: result.token,
       username: result.username,
