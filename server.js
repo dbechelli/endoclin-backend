@@ -18,8 +18,11 @@ const fs = require('fs')
 // Importar módulo de autenticação
 const auth = require('./auth')
 
-// Carregar variáveis do .env se existir (desenvolvimento)
-require('dotenv').config({ path: '.env' })
+// Carregar variáveis do .env apenas se existir (desenvolvimento local)
+const fs = require('fs')
+if (fs.existsSync('.env')) {
+  require('dotenv').config({ path: '.env' })
+}
 
 const app = express()
 const PORT = process.env.PORT || 3000
