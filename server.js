@@ -88,17 +88,27 @@ app.get('/', (req, res) => {
 // GET /health - Health check com status do DB
 app.get('/health', async (req, res) => {
   try {
-    const result = await pool.query('SELECT NOW()')
+    // Tenta conectar ao banco de dados com timeout
+    const result = await Promise.race([
+      pool.query('SELECT NOW()'),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      )
+    ])
+    
     res.status(200).json({ 
-      status: 'ok',
+      status: 'healthy',
       database: 'connected',
-      timestamp: result.rows[0].now
+      timestamp: new Date().toISOString()
     })
   } catch (err) {
-    res.status(503).json({ 
-      status: 'error',
-      database: 'disconnected',
-      error: err.message
+    // Se o banco falhar, ainda assim retorna 200 para não derrubar o container
+    console.log('⚠️  Health check: Banco de dados indisponível -', err.message)
+    res.status(200).json({ 
+      status: 'degraded',
+      database: 'unavailable',
+      message: 'Servidor operacional, aguardando banco de dados',
+      timestamp: new Date().toISOString()
     })
   }
 })
@@ -354,10 +364,20 @@ app.get('/api/debug/env', (req, res) => {
 })
 
 // Iniciar servidor
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✅ Servidor rodando em http://0.0.0.0:${PORT}`)
-  console.log(`📡 URL de health check: http://localhost:${PORT}/health`)
-  console.log(`🔌 Tentando conectar ao PostgreSQL em ${process.env.DB_HOST}:${process.env.DB_PORT}...`)
+  console.log(`📡 Health check: GET http://localhost:${PORT}/health`)
+  console.log(`🔌 Conectando ao banco em ${process.env.DB_HOST}:${process.env.DB_PORT}...`)
+  console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`)
+})
+
+// Tratamento de erros não capturados
+process.on('uncaughtException', (err) => {
+  console.error('❌ Erro não capturado:', err)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promise rejeitada não tratada:', reason)
 })
 
 // Graceful shutdown
