@@ -39,9 +39,8 @@ app.post('/auth/login', (req, res) => {
     const result = auth.login(username, password)
     if (!result.success) {
       return res.status(401).json({ error: result.error })
-    }
-    
-    res.json({ token: result.token, username: result.username })
+    }    
+    res.json({ message: 'Login com sucesso' })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
