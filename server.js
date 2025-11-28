@@ -15,6 +15,9 @@ const cors = require('cors')
 const path = require('path')
 const fs = require('fs')
 
+// Importar módulo de autenticação
+const auth = require('./auth')
+
 // Carregar variáveis do .env se existir (desenvolvimento)
 require('dotenv').config({ path: '.env' })
 
@@ -54,25 +57,95 @@ pool.on('connect', () => {
   console.log('✅ Conectado ao PostgreSQL com sucesso!')
 })
 
-// Middleware de autenticação (simples)
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
-  
-  if (!token) {
-    return res.status(401).json({ error: 'Token não fornecido' })
-  }
-  
-  // Validação do token
-  if (token !== process.env.API_KEY) {
-    return res.status(403).json({ error: 'Token inválido' })
-  }
-  
-  next()
-}
-
 // Aplicar autenticação em todas as rotas /api
-app.use('/api', authenticateToken)
+app.use('/api', auth.verifyAccessToken)
+
+// ============ AUTENTICAÇÃO ============
+
+// POST /auth/login - Fazer login
+app.post('/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body
+
+    if (!username || !password) {
+      return res.status(400).json({
+        error: 'Usuário e senha são obrigatórios'
+      })
+    }
+
+    const result = auth.login(username, password)
+
+    if (!result.success) {
+      return res.status(401).json({
+        error: result.error,
+        code: result.code
+      })
+    }
+
+    res.json({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+      type: 'Bearer'
+    })
+  } catch (error) {
+    console.error('Erro ao fazer login:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// POST /auth/refresh - Renovar access token
+app.post('/auth/refresh', (req, res) => {
+  try {
+    const { refreshToken } = req.body
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        error: 'Refresh token é obrigatório'
+      })
+    }
+
+    const result = auth.refreshAccessToken(refreshToken)
+
+    if (!result.success) {
+      return res.status(401).json({
+        error: result.error,
+        code: result.code
+      })
+    }
+
+    res.json({
+      accessToken: result.accessToken,
+      expiresIn: result.expiresIn,
+      type: 'Bearer'
+    })
+  } catch (error) {
+    console.error('Erro ao renovar token:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// POST /auth/logout - Fazer logout
+app.post('/auth/logout', auth.verifyAccessToken, (req, res) => {
+  try {
+    const { refreshToken } = req.body
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        error: 'Refresh token é obrigatório'
+      })
+    }
+
+    auth.logout(refreshToken)
+
+    res.json({
+      message: 'Logout realizado com sucesso'
+    })
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
 
 // ============ HEALTH CHECK (sem autenticação) ============
 
