@@ -114,6 +114,7 @@ app.post('/api/profissionais', async (req, res) => {
         nome_exibicao,
         especialidade,
         crm_registro,
+        rqe,
         email,
         telefone,
         ativo,
@@ -122,8 +123,8 @@ app.post('/api/profissionais', async (req, res) => {
 
       const query = `
         INSERT INTO profissionais 
-        (nome_completo, nome_exibicao, especialidade, crm_registro, email, telefone, ativo, config_atendimento)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (nome_completo, nome_exibicao, especialidade, crm_registro, rqe, email, telefone, ativo, config_atendimento)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `
 
@@ -132,6 +133,7 @@ app.post('/api/profissionais', async (req, res) => {
         nome_exibicao,
         especialidade,
         crm_registro,
+        rqe,
         email,
         telefone,
         ativo ?? true,
@@ -162,6 +164,7 @@ app.patch('/api/profissionais', async (req, res) => {
       nome_exibicao,
       especialidade,
       crm_registro,
+      rqe,
       email,
       telefone,
       ativo,
@@ -187,6 +190,10 @@ app.patch('/api/profissionais', async (req, res) => {
     if (crm_registro !== undefined) {
       updates.push(`crm_registro = $${paramIndex++}`)
       params.push(crm_registro)
+    }
+    if (rqe !== undefined) {
+      updates.push(`rqe = $${paramIndex++}`)
+      params.push(rqe)
     }
     if (email !== undefined) {
       updates.push(`email = $${paramIndex++}`)
