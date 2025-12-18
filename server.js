@@ -296,8 +296,8 @@ app.post('/api/agendamentos', async (req, res) => {
     for (const record of records) {
       const query = `
         INSERT INTO agendamentos 
-        (nome_paciente, profissional, data_consulta, hora_consulta, tipo_consulta, status, observacoes, primeira_consulta)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (nome_paciente, profissional, data_consulta, hora_consulta, tipo_consulta, status, observacoes, primeira_consulta, procedimento, valor)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `
 
@@ -309,7 +309,9 @@ app.post('/api/agendamentos', async (req, res) => {
         record.tipo_consulta,
         record.status || 'pendente',
         record.observacoes,
-        record.primeira_consulta || false
+        record.primeira_consulta || false,
+        record.procedimento,
+        record.valor
       ])
 
       insertedRecords.push(result.rows[0])
@@ -339,7 +341,9 @@ app.patch('/api/agendamentos', async (req, res) => {
       tipo_consulta,
       status,
       observacoes,
-      primeira_consulta
+      primeira_consulta,
+      procedimento,
+      valor
     } = req.body
 
     const updates = []
@@ -377,6 +381,14 @@ app.patch('/api/agendamentos', async (req, res) => {
     if (primeira_consulta !== undefined) {
       updates.push(`primeira_consulta = $${paramIndex++}`)
       params.push(primeira_consulta)
+    }
+    if (procedimento !== undefined) {
+      updates.push(`procedimento = $${paramIndex++}`)
+      params.push(procedimento)
+    }
+    if (valor !== undefined) {
+      updates.push(`valor = $${paramIndex++}`)
+      params.push(valor)
     }
 
     if (updates.length === 0) {
